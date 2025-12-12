@@ -62,11 +62,17 @@ class _HomeScreenState extends State<HomeScreen> {
       MaterialPageRoute<void>(
         builder: (context) => FaceDetectionScreen(
           cameraController: CameraController(
-            _cameras[0],
+            _cameras[1],
             ResolutionPreset.medium,
             enableAudio: false,
             imageFormatGroup: ImageFormatGroup.jpeg,
           ),
+
+          cameras: _cameras,
+
+
+
+
         ),
       ),
     );
