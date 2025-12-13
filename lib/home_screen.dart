@@ -47,7 +47,13 @@ class _HomeScreenState extends State<HomeScreen> {
   _onTapFaceDetection() async {
     if (!mounted) return;
     Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (context) => FaceDetectionScreen()),
+      MaterialPageRoute<void>(
+        builder: (context) => FaceDetectionScreen(
+          onComplete: () {
+            debugPrint("callback is calling.......");
+          },
+        ),
+      ),
     );
   }
 }

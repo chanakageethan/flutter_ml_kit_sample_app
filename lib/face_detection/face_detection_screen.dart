@@ -11,9 +11,10 @@ class FaceDetectionScreen extends StatefulWidget {
   const FaceDetectionScreen({
     super.key,
     this.initialCameraLensDirection = CameraLensDirection.front,
+    this.onComplete,
   });
 
-  // final VoidCallback? onDetectorViewModeChanged;
+  final VoidCallback? onComplete;
   final CameraLensDirection initialCameraLensDirection;
 
   @override
@@ -152,6 +153,16 @@ class _FaceDetectionScreenState extends State<FaceDetectionScreen> {
         _cameraLensDirection,
       );
       _customPaint = CustomPaint(painter: painter);
+
+      //===================
+
+      if (widget.onComplete != null) {
+        widget.onComplete!();
+
+        await _controller?.pausePreview();
+      }
+
+      //===================
     } else {
       String text = 'Faces found: ${faces.length}\n\n';
       for (final face in faces) {
