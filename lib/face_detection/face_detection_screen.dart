@@ -8,16 +8,12 @@ import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:ml_kit_sample_app/face_detection/painters/face_detector_painter.dart';
 
 class FaceDetectionScreen extends StatefulWidget {
-  FaceDetectionScreen(
-      {super.key,
-        this.onCameraFeedReady,
-        this.onDetectorViewModeChanged,
-        this.onCameraLensDirectionChanged,
-        this.initialCameraLensDirection = CameraLensDirection.front});
+  const FaceDetectionScreen({
+    super.key,
+    this.initialCameraLensDirection = CameraLensDirection.front,
+  });
 
-  final VoidCallback? onCameraFeedReady;
-  final VoidCallback? onDetectorViewModeChanged;
-  final Function(CameraLensDirection direction)? onCameraLensDirectionChanged;
+  // final VoidCallback? onDetectorViewModeChanged;
   final CameraLensDirection initialCameraLensDirection;
 
   @override
@@ -27,29 +23,17 @@ class FaceDetectionScreen extends StatefulWidget {
 class _FaceDetectionScreenState extends State<FaceDetectionScreen> {
   static List<CameraDescription> _cameras = [];
   CameraController? _controller;
+
   int _cameraIndex = -1;
-  double _currentZoomLevel = 1.0;
-  double _minAvailableZoom = 1.0;
-  double _maxAvailableZoom = 1.0;
-  double _minAvailableExposureOffset = 0.0;
-  double _maxAvailableExposureOffset = 0.0;
-  double _currentExposureOffset = 0.0;
-  bool _changingCameraLens = false;
-
-
 
   bool _canProcess = true;
   bool _isBusy = false;
   String? _text;
-  final  _cameraLensDirection = CameraLensDirection.front;
+  final _cameraLensDirection = CameraLensDirection.front;
   CustomPaint? _customPaint;
 
-
   final FaceDetector _faceDetector = FaceDetector(
-    options: FaceDetectorOptions(
-      enableContours: true,
-      enableLandmarks: true,
-    ),
+    options: FaceDetectorOptions(enableContours: true, enableLandmarks: true),
   );
 
   @override
@@ -96,21 +80,8 @@ class _FaceDetectionScreenState extends State<FaceDetectionScreen> {
       child: Stack(
         fit: StackFit.expand,
         children: <Widget>[
-          Center(
-            child: _changingCameraLens
-                ? Center(
-              child: const Text('Changing camera lens'),
-            )
-                : CameraPreview(
-              _controller!,
-              child: _customPaint,
-            ),
-          ),
+          Center(child: CameraPreview(_controller!, child: _customPaint)),
           _backButton(),
-          _switchLiveCameraToggle(),
-          _detectionViewModeToggle(),
-          _zoomControl(),
-          _exposureControl(),
         ],
       ),
     );
@@ -126,147 +97,8 @@ class _FaceDetectionScreenState extends State<FaceDetectionScreen> {
         heroTag: Object(),
         onPressed: () => Navigator.of(context).pop(),
         backgroundColor: Colors.black54,
-        child: Icon(
-          Icons.arrow_back_ios_outlined,
-          size: 20,
-        ),
+        child: Icon(Icons.arrow_back_ios_outlined, size: 20),
       ),
-    ),
-  );
-
-  Widget _detectionViewModeToggle() => Positioned(
-    bottom: 8,
-    left: 8,
-    child: SizedBox(
-      height: 50.0,
-      width: 50.0,
-      child: FloatingActionButton(
-        heroTag: Object(),
-        onPressed: widget.onDetectorViewModeChanged,
-        backgroundColor: Colors.black54,
-        child: Icon(
-          Icons.photo_library_outlined,
-          size: 25,
-        ),
-      ),
-    ),
-  );
-
-  Widget _switchLiveCameraToggle() => Positioned(
-    bottom: 8,
-    right: 8,
-    child: SizedBox(
-      height: 50.0,
-      width: 50.0,
-      child: FloatingActionButton(
-        heroTag: Object(),
-        onPressed: _switchLiveCamera,
-        backgroundColor: Colors.black54,
-        child: Icon(
-          Platform.isIOS
-              ? Icons.flip_camera_ios_outlined
-              : Icons.flip_camera_android_outlined,
-          size: 25,
-        ),
-      ),
-    ),
-  );
-
-  Widget _zoomControl() => Positioned(
-    bottom: 16,
-    left: 0,
-    right: 0,
-    child: Align(
-      alignment: Alignment.bottomCenter,
-      child: SizedBox(
-        width: 250,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Expanded(
-              child: Slider(
-                value: _currentZoomLevel,
-                min: _minAvailableZoom,
-                max: _maxAvailableZoom,
-                activeColor: Colors.white,
-                inactiveColor: Colors.white30,
-                onChanged: (value) async {
-                  setState(() {
-                    _currentZoomLevel = value;
-                  });
-                  await _controller?.setZoomLevel(value);
-                },
-              ),
-            ),
-            Container(
-              width: 50,
-              decoration: BoxDecoration(
-                color: Colors.black54,
-                borderRadius: BorderRadius.circular(10.0),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Center(
-                  child: Text(
-                    '${_currentZoomLevel.toStringAsFixed(1)}x',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    ),
-  );
-
-  Widget _exposureControl() => Positioned(
-    top: 40,
-    right: 8,
-    child: ConstrainedBox(
-      constraints: BoxConstraints(
-        maxHeight: 250,
-      ),
-      child: Column(children: [
-        Container(
-          width: 55,
-          decoration: BoxDecoration(
-            color: Colors.black54,
-            borderRadius: BorderRadius.circular(10.0),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Center(
-              child: Text(
-                '${_currentExposureOffset.toStringAsFixed(1)}x',
-                style: TextStyle(color: Colors.white),
-              ),
-            ),
-          ),
-        ),
-        Expanded(
-          child: RotatedBox(
-            quarterTurns: 3,
-            child: SizedBox(
-              height: 30,
-              child: Slider(
-                value: _currentExposureOffset,
-                min: _minAvailableExposureOffset,
-                max: _maxAvailableExposureOffset,
-                activeColor: Colors.white,
-                inactiveColor: Colors.white30,
-                onChanged: (value) async {
-                  setState(() {
-                    _currentExposureOffset = value;
-                  });
-                  await _controller?.setExposureOffset(value);
-                },
-              ),
-            ),
-          ),
-        )
-      ]),
     ),
   );
 
@@ -285,28 +117,8 @@ class _FaceDetectionScreenState extends State<FaceDetectionScreen> {
       if (!mounted) {
         return;
       }
-      _controller?.getMinZoomLevel().then((value) {
-        _currentZoomLevel = value;
-        _minAvailableZoom = value;
-      });
-      _controller?.getMaxZoomLevel().then((value) {
-        _maxAvailableZoom = value;
-      });
-      _currentExposureOffset = 0.0;
-      _controller?.getMinExposureOffset().then((value) {
-        _minAvailableExposureOffset = value;
-      });
-      _controller?.getMaxExposureOffset().then((value) {
-        _maxAvailableExposureOffset = value;
-      });
-      _controller?.startImageStream(_processCameraImage).then((value) {
-        if (widget.onCameraFeedReady != null) {
-          widget.onCameraFeedReady!();
-        }
-        if (widget.onCameraLensDirectionChanged != null) {
-          widget.onCameraLensDirectionChanged!(camera.lensDirection);
-        }
-      });
+
+      _controller?.startImageStream(_processCameraImage).then((value) {});
       setState(() {});
     });
   }
@@ -315,15 +127,6 @@ class _FaceDetectionScreenState extends State<FaceDetectionScreen> {
     await _controller?.stopImageStream();
     await _controller?.dispose();
     _controller = null;
-  }
-
-  Future _switchLiveCamera() async {
-    setState(() => _changingCameraLens = true);
-    _cameraIndex = (_cameraIndex + 1) % _cameras.length;
-
-    await _stopLiveFeed();
-    await _startLiveFeed();
-    setState(() => _changingCameraLens = false);
   }
 
   void _processCameraImage(CameraImage image) {
@@ -387,7 +190,7 @@ class _FaceDetectionScreenState extends State<FaceDetectionScreen> {
       rotation = InputImageRotationValue.fromRawValue(sensorOrientation);
     } else if (Platform.isAndroid) {
       var rotationCompensation =
-      _orientations[_controller!.value.deviceOrientation];
+          _orientations[_controller!.value.deviceOrientation];
       if (rotationCompensation == null) return null;
       if (camera.lensDirection == CameraLensDirection.front) {
         // front-facing
