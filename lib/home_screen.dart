@@ -13,15 +13,10 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-
-
   }
-
-
 
   @override
   void dispose() {
-
     super.dispose();
   }
 
@@ -50,31 +45,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   _onTapFaceDetection() async {
-    CameraController controller;
-    List<CameraDescription> _cameras = <CameraDescription>[];
-
-    try {
-      _cameras = await availableCameras();
-    } catch (e) {}
-
     if (!mounted) return;
     Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (context) => FaceDetectionScreen(
-          cameraController: CameraController(
-            _cameras[1],
-            ResolutionPreset.medium,
-            enableAudio: false,
-            imageFormatGroup: ImageFormatGroup.jpeg,
-          ),
-
-          cameras: _cameras,
-
-
-
-
-        ),
-      ),
+      MaterialPageRoute<void>(builder: (context) => FaceDetectionScreen()),
     );
   }
 }
