@@ -155,11 +155,14 @@ class _FaceDetectionScreenState extends State<FaceDetectionScreen> {
       _customPaint = CustomPaint(painter: painter);
 
       //===================
-
+      //handle the liveness cheecks here
       if (widget.onComplete != null) {
-        widget.onComplete!();
+        debugPrint("====faces=========== : " + faces.length.toString());
 
-        await _controller?.pausePreview();
+        if (faces.length == 1) {
+          // await _controller?.pausePreview();
+          widget.onComplete!();
+        }
       }
 
       //===================
