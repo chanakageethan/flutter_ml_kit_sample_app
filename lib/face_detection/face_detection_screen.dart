@@ -34,7 +34,11 @@ class _FaceDetectionScreenState extends State<FaceDetectionScreen> {
   CustomPaint? _customPaint;
 
   final FaceDetector _faceDetector = FaceDetector(
-    options: FaceDetectorOptions(enableContours: true, enableLandmarks: true),
+    options: FaceDetectorOptions(
+      enableClassification: true,
+      enableContours: true,
+      enableLandmarks: true,
+    ),
   );
 
   @override
@@ -161,7 +165,13 @@ class _FaceDetectionScreenState extends State<FaceDetectionScreen> {
 
         if (faces.length == 1) {
           // await _controller?.pausePreview();
-          widget.onComplete!();
+          //Blink detection
+          bool isBlinkDetected = blinkDetection(faces.first);
+
+          if (isBlinkDetected) {
+            widget.onComplete!();
+            _controller?.pausePreview();
+          }
         }
       }
 
@@ -246,5 +256,16 @@ class _FaceDetectionScreenState extends State<FaceDetectionScreen> {
         bytesPerRow: plane.bytesPerRow, // used only in iOS
       ),
     );
+  }
+
+  bool blinkDetection(Face face) {
+    if (face.leftEyeOpenProbability! < 0.4 ||
+        face.rightEyeOpenProbability! < 0.4) {
+      debugPrint("Blinking....");
+      return true;
+    } else {
+      debugPrint("not Blinking");
+      return false;
+    }
   }
 }
