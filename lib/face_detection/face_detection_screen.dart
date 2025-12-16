@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_mlkit_commons/google_mlkit_commons.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:ml_kit_sample_app/face_detection/painters/center_oval_overlay.dart';
 import 'package:ml_kit_sample_app/face_detection/painters/face_detector_painter.dart';
@@ -33,6 +32,12 @@ class _FaceDetectionScreenState extends State<FaceDetectionScreen> {
   String? _text;
   final _cameraLensDirection = CameraLensDirection.front;
   CustomPaint? _customPaint;
+
+
+  bool isFaceValidated = false;
+  String instructionText  = "";
+
+
 
   final FaceDetector _faceDetector = FaceDetector(
     options: FaceDetectorOptions(
@@ -87,7 +92,8 @@ class _FaceDetectionScreenState extends State<FaceDetectionScreen> {
         fit: StackFit.expand,
         children: <Widget>[
           Center(child: CameraPreview(_controller!, child: _customPaint)),
-          CenterOvalOverlay(isActive: true),
+          CenterOvalOverlay(isActive: isFaceValidated),
+          _bottomOptionsWidget(context),
           _backButton(),
         ],
       ),
@@ -108,6 +114,31 @@ class _FaceDetectionScreenState extends State<FaceDetectionScreen> {
       ),
     ),
   );
+
+  Widget _bottomOptionsWidget(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+
+    final ovalHeight = size.height * 0.5;
+
+    return Positioned(
+      top: (size.height / 2) + (ovalHeight / 2) + 16,
+      left: 24,
+      right: 24,
+      child: Column(
+        children: [
+          Text(
+            instructionText,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Future _startLiveFeed() async {
     final camera = _cameras[_cameraIndex];
