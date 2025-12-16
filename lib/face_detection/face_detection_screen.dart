@@ -163,6 +163,9 @@ class _FaceDetectionScreenState extends State<FaceDetectionScreen> {
       if (widget.onComplete != null) {
         debugPrint("====faces=========== : " + faces.length.toString());
 
+        _analyzeFacePosition(faces.first);
+
+
         if (faces.length == 1) {
           // await _controller?.pausePreview();
           //Blink detection
@@ -266,6 +269,22 @@ class _FaceDetectionScreenState extends State<FaceDetectionScreen> {
     } else {
       debugPrint("not Blinking");
       return false;
+    }
+  }
+
+
+
+  void _analyzeFacePosition(Face face) {
+    final angleY = face.headEulerAngleY;
+
+    if (angleY != null) {
+      if (angleY > 15) {
+        debugPrint('analyzeFacePosition: Turned Right');
+      } else if (angleY < -15) {
+        debugPrint('analyzeFacePosition: Turned Left');
+      } else {
+        debugPrint('analyzeFacePosition: Centered');
+      }
     }
   }
 }
