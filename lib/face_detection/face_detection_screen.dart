@@ -33,11 +33,8 @@ class _FaceDetectionScreenState extends State<FaceDetectionScreen> {
   final _cameraLensDirection = CameraLensDirection.front;
   CustomPaint? _customPaint;
 
-
   bool isFaceValidated = false;
-  String instructionText  = "";
-
-
+  String instructionText = "";
 
   final FaceDetector _faceDetector = FaceDetector(
     options: FaceDetectorOptions(
@@ -193,23 +190,33 @@ class _FaceDetectionScreenState extends State<FaceDetectionScreen> {
 
       //===================
       //handle the liveness cheecks here
-      if (widget.onComplete != null) {
-        debugPrint("====faces=========== : " + faces.length.toString());
 
-        if (faces.length == 1) {
-          // await _controller?.pausePreview();
-          //Blink detection
+      if (faces.length == 1) {
+        // await _controller?.pausePreview();
+        //Blink detection
+
+        bool isFaceFitToOval = _detectFaceScreenLocation(
+          faces.first,
+          inputImage.metadata!,
+        );
+
+        if (isFaceFitToOval) {
           bool isBlinkDetected = blinkDetection(faces.first);
 
-          _analyzeFacePosition(faces.first);
-
-          _detectFaceScreenLocation(faces.first, inputImage.metadata!);
-
           if (isBlinkDetected) {
+            _controller?.stopImageStream();
+
+            setState(() {
+              instructionText = 'Capturing...';
+            });
             widget.onComplete!();
-            // _controller?.pausePreview();
           }
         }
+
+        // if (isBlinkDetected) {
+        //   widget.onComplete!();
+        //   // _controller?.pausePreview();
+        // }
       }
 
       //===================
@@ -305,6 +312,25 @@ class _FaceDetectionScreenState extends State<FaceDetectionScreen> {
   //     return false;
   //   }
   // }
+  // bool blinkDetection(Face face) {
+  //   final leftEye = face.leftEyeOpenProbability;
+  //   final rightEye = face.rightEyeOpenProbability;
+  //
+  //   if (leftEye == null || rightEye == null) {
+  //     debugPrint('Blink: eye probability not available');
+  //     return false;
+  //   }
+  //
+  //   if (leftEye < 0.4 || rightEye < 0.4) {
+  //     debugPrint('Blinking.... L:$leftEye R:$rightEye');
+  //
+  //     return true;
+  //   } else {
+  //     debugPrint('Not blinking.... L:$leftEye R:$rightEye');
+  //     return false;
+  //   }
+  // }
+
   bool blinkDetection(Face face) {
     final leftEye = face.leftEyeOpenProbability;
     final rightEye = face.rightEyeOpenProbability;
@@ -316,25 +342,11 @@ class _FaceDetectionScreenState extends State<FaceDetectionScreen> {
 
     if (leftEye < 0.4 || rightEye < 0.4) {
       debugPrint('Blinking.... L:$leftEye R:$rightEye');
+
       return true;
-    } else {
-      debugPrint('Not blinking.... L:$leftEye R:$rightEye');
-      return false;
     }
-  }
 
-  void _analyzeFacePosition(Face face) {
-    final angleY = face.headEulerAngleY;
-
-    if (angleY != null) {
-      if (angleY > 15) {
-        debugPrint('analyzeFacePosition: Turned Right');
-      } else if (angleY < -15) {
-        debugPrint('analyzeFacePosition: Turned Left');
-      } else {
-        debugPrint('analyzeFacePosition: Centered');
-      }
-    }
+    return false;
   }
 
   Rect _translateRect(
@@ -369,7 +381,7 @@ class _FaceDetectionScreenState extends State<FaceDetectionScreen> {
     return Rect.fromLTRB(left, top, right, bottom);
   }
 
-  void _detectFaceScreenLocation(Face face, InputImageMetadata metadata) {
+  bool _detectFaceScreenLocation(Face face, InputImageMetadata metadata) {
     final screenSize = MediaQuery.of(context).size;
 
     final faceRect = _translateRect(
@@ -390,14 +402,62 @@ class _FaceDetectionScreenState extends State<FaceDetectionScreen> {
 
     if (dx.abs() < tolerance && dy.abs() < tolerance) {
       debugPrint('FACE POSITION: CENTER');
-    } else if (dy < -tolerance) {
-      debugPrint('FACE POSITION: TOP');
-    } else if (dy > tolerance) {
-      debugPrint('FACE POSITION: BOTTOM');
-    } else if (dx < -tolerance) {
-      debugPrint('FACE POSITION: LEFT');
-    } else if (dx > tolerance) {
-      debugPrint('FACE POSITION: RIGHT');
+      setState(() {
+        instructionText = 'Blink';
+        isFaceValidated = true;
+      });
+      return true;
     }
+
+    setState(() {
+      if (dy < -tolerance) {
+        debugPrint('FACE POSITION: TOP');
+
+        instructionText = 'Move your face slightly down.';
+      } else if (dy > tolerance) {
+        debugPrint('FACE POSITION: BOTTOM');
+
+        instructionText = 'Move your face slightly up.';
+      } else if (dx < -tolerance) {
+        debugPrint('FACE POSITION: LEFT');
+
+        instructionText = 'Move your face slightly to the right.';
+      } else if (dx > tolerance) {
+        debugPrint('FACE POSITION: RIGHT');
+
+        instructionText = 'Move your face slightly to the left.';
+      }
+      isFaceValidated = false;
+    });
+
+    return false;
   }
+
+  // bool _analyzeFacePosition(Face face) {
+  //   final angleY = face.headEulerAngleY;
+  //
+  //   if (angleY != null) {
+  //     if (angleY > 15) {
+  //       debugPrint('analyzeFacePosition: Turned Right');
+  //       setState(() {
+  //         instructionText = 'Turned Right';
+  //       });
+  //       return false;
+  //     } else if (angleY < -15) {
+  //       debugPrint('analyzeFacePosition: Turned Left');
+  //       setState(() {
+  //         instructionText = 'Turned Left';
+  //       });
+  //       return false;
+  //     } else {
+  //       debugPrint('analyzeFacePosition: Centered');
+  //       setState(() {
+  //         instructionText = 'Centered';
+  //       });
+  //       return true;
+  //     }
+  //   } else {
+  //     return false;
+  //   }
+  // }
 }
