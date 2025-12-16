@@ -39,6 +39,7 @@ dependencies:
   # The default Android implementation from camera_android_camerax doesn't support the required image format.
   camera_android: ^0.10.10+1
 
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

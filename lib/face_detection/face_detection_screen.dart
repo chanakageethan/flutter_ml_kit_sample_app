@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_mlkit_commons/google_mlkit_commons.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
+import 'package:ml_kit_sample_app/face_detection/painters/center_oval_overlay.dart';
 import 'package:ml_kit_sample_app/face_detection/painters/face_detector_painter.dart';
 
 class FaceDetectionScreen extends StatefulWidget {
@@ -86,7 +87,7 @@ class _FaceDetectionScreenState extends State<FaceDetectionScreen> {
         fit: StackFit.expand,
         children: <Widget>[
           Center(child: CameraPreview(_controller!, child: _customPaint)),
-
+          CenterOvalOverlay(isActive: true),
           _backButton(),
         ],
       ),
@@ -164,12 +165,12 @@ class _FaceDetectionScreenState extends State<FaceDetectionScreen> {
       if (widget.onComplete != null) {
         debugPrint("====faces=========== : " + faces.length.toString());
 
-        _analyzeFacePosition(faces.first);
-
         if (faces.length == 1) {
           // await _controller?.pausePreview();
           //Blink detection
           bool isBlinkDetected = blinkDetection(faces.first);
+
+          _analyzeFacePosition(faces.first);
 
           _detectFaceScreenLocation(faces.first, inputImage.metadata!);
 
