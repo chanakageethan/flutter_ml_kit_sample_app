@@ -86,6 +86,7 @@ class _FaceDetectionScreenState extends State<FaceDetectionScreen> {
         fit: StackFit.expand,
         children: <Widget>[
           Center(child: CameraPreview(_controller!, child: _customPaint)),
+
           _backButton(),
         ],
       ),
@@ -165,15 +166,16 @@ class _FaceDetectionScreenState extends State<FaceDetectionScreen> {
 
         _analyzeFacePosition(faces.first);
 
-
         if (faces.length == 1) {
           // await _controller?.pausePreview();
           //Blink detection
           bool isBlinkDetected = blinkDetection(faces.first);
 
+          _detectFaceScreenLocation(faces.first, inputImage.metadata!);
+
           if (isBlinkDetected) {
             widget.onComplete!();
-            _controller?.pausePreview();
+            // _controller?.pausePreview();
           }
         }
       }
@@ -261,18 +263,33 @@ class _FaceDetectionScreenState extends State<FaceDetectionScreen> {
     );
   }
 
+  // bool blinkDetection(Face face) {
+  //   if (face.leftEyeOpenProbability! < 0.4 ||
+  //       face.rightEyeOpenProbability! < 0.4) {
+  //     debugPrint("Blinking....");
+  //     return true;
+  //   } else {
+  //     debugPrint("not Blinking");
+  //     return false;
+  //   }
+  // }
   bool blinkDetection(Face face) {
-    if (face.leftEyeOpenProbability! < 0.4 ||
-        face.rightEyeOpenProbability! < 0.4) {
-      debugPrint("Blinking....");
+    final leftEye = face.leftEyeOpenProbability;
+    final rightEye = face.rightEyeOpenProbability;
+
+    if (leftEye == null || rightEye == null) {
+      debugPrint('Blink: eye probability not available');
+      return false;
+    }
+
+    if (leftEye < 0.4 || rightEye < 0.4) {
+      debugPrint('Blinking.... L:$leftEye R:$rightEye');
       return true;
     } else {
-      debugPrint("not Blinking");
+      debugPrint('Not blinking.... L:$leftEye R:$rightEye');
       return false;
     }
   }
-
-
 
   void _analyzeFacePosition(Face face) {
     final angleY = face.headEulerAngleY;
@@ -285,6 +302,70 @@ class _FaceDetectionScreenState extends State<FaceDetectionScreen> {
       } else {
         debugPrint('analyzeFacePosition: Centered');
       }
+    }
+  }
+
+  Rect _translateRect(
+    Rect boundingBox,
+    Size imageSize,
+    Size screenSize,
+    InputImageRotation rotation,
+    CameraLensDirection cameraLensDirection,
+  ) {
+    double scaleX, scaleY;
+
+    if (rotation == InputImageRotation.rotation90deg ||
+        rotation == InputImageRotation.rotation270deg) {
+      scaleX = screenSize.width / imageSize.height;
+      scaleY = screenSize.height / imageSize.width;
+    } else {
+      scaleX = screenSize.width / imageSize.width;
+      scaleY = screenSize.height / imageSize.height;
+    }
+
+    double left = boundingBox.left * scaleX;
+    double top = boundingBox.top * scaleY;
+    double right = boundingBox.right * scaleX;
+    double bottom = boundingBox.bottom * scaleY;
+
+    // Mirror for front camera
+    if (cameraLensDirection == CameraLensDirection.front) {
+      left = screenSize.width - right;
+      right = screenSize.width - boundingBox.left * scaleX;
+    }
+
+    return Rect.fromLTRB(left, top, right, bottom);
+  }
+
+  void _detectFaceScreenLocation(Face face, InputImageMetadata metadata) {
+    final screenSize = MediaQuery.of(context).size;
+
+    final faceRect = _translateRect(
+      face.boundingBox,
+      metadata.size,
+      screenSize,
+      metadata.rotation!,
+      _cameraLensDirection,
+    );
+
+    final faceCenter = faceRect.center;
+    final screenCenter = Offset(screenSize.width / 2, screenSize.height / 2);
+
+    const tolerance = 60.0; // pixels
+
+    final dx = faceCenter.dx - screenCenter.dx;
+    final dy = faceCenter.dy - screenCenter.dy;
+
+    if (dx.abs() < tolerance && dy.abs() < tolerance) {
+      debugPrint('FACE POSITION: CENTER');
+    } else if (dy < -tolerance) {
+      debugPrint('FACE POSITION: TOP');
+    } else if (dy > tolerance) {
+      debugPrint('FACE POSITION: BOTTOM');
+    } else if (dx < -tolerance) {
+      debugPrint('FACE POSITION: LEFT');
+    } else if (dx > tolerance) {
+      debugPrint('FACE POSITION: RIGHT');
     }
   }
 }
