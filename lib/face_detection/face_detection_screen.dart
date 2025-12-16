@@ -158,11 +158,30 @@ class _FaceDetectionScreenState extends State<FaceDetectionScreen> {
     });
   }
 
-  Future _stopLiveFeed() async {
-    await _controller?.stopImageStream();
-    await _controller?.dispose();
-    _controller = null;
+  // Future _stopLiveFeed() async {
+  //   if(_controller != null) {
+  //     await _controller?.stopImageStream();
+  //     await _controller?.dispose();
+  //   }
+  //   _controller = null;
+  // }
+
+  Future<void> _stopLiveFeed() async {
+    final controller = _controller;
+    if (controller == null) return;
+
+    try {
+      if (controller.value.isStreamingImages) {
+        await controller.stopImageStream();
+      }
+      await controller.dispose();
+    } catch (e) {
+      debugPrint('Error stopping camera: $e');
+    } finally {
+      _controller = null;
+    }
   }
+
 
   void _processCameraImage(CameraImage image) {
     final inputImage = _inputImageFromCameraImage(image);
